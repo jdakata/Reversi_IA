@@ -60,7 +60,7 @@ print("The game is over")
 print(b)
 (nbwhites, nbblacks) = b.get_nb_pieces()
 print("Time:", totalTime)
-print("Winner: ", end="")
+print("Winner: ", end = "")
 if nbwhites > nbblacks:
     print("WHITE")
 elif nbblacks > nbwhites:

@@ -32,10 +32,6 @@ WeightMap = numpy.array([[500, -25, 10, 5, 4, 4, 5, 10, -25, 500],
                          [-25, -45,  1, 1, 1, 1, 1,  1, -45, -25],
                          [500, -25, 10, 5, 4, 4, 5, 10, -25, 500]])
 
-#def generatetree(root):
-   # root.get
-
-
 class myPlayer(PlayerInterface):
 
     def __init__(self):
@@ -73,3 +69,37 @@ class myPlayer(PlayerInterface):
             print("I won!!!")
         else:
             print("I lost :(!!")
+
+    def evaluate(self,weight):
+        return weight
+
+    def computeWeight(self,move):
+        [player,x,y] = move
+        if(player == self._mycolor):
+            return WeightMap[x,y]
+        else:
+            return -WeightMap[x,y]
+
+
+    def maxValue(self,alpha,beta,sumWeight,depth,depthMax):
+        if depth == depthMax:
+            return self.evaluate(sumWeight)
+        for move in self._board.legal_moves():
+            self._board.push(move)
+            alpha = max(alpha,self.minValue(alpha,beta,sumWeight+self.computeWeight(move),depth,depthMax))
+            self._board.pop()
+            if alpha >= beta:
+                return beta
+        return alpha
+
+    def minValue(self,alpha,beta,sumWeight,depth,depthMax):
+        if depth == depthMax:
+            return self.evaluate(sumWeight)
+        for move in self._board.legal_moves():
+            self._board.push(move)
+            beta = min(beta,self.maxValue(alpha,beta,sumWeight+self.computeWeight(move),depth,depthMax))
+            self._board.pop()
+            if alpha >= beta:
+                return alpha
+        return beta
+    
