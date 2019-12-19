@@ -5,7 +5,8 @@ import Reversi
 import numpy
 from random import randint
 from playerInterface import *
-
+import sys
+import random
 
 class node:
     def __init__(self, NodeFather, NodeChildren, NodeBoard, NodeDepth):
@@ -45,14 +46,37 @@ class myPlayer(PlayerInterface):
         if self._board.is_game_over():
             print("Referee told me to play but the game is over!")
             return (-1, -1)
+        alpha = -99999999
+        beta = 99999999
+        profondeur = 3
+        player = 2
+        best_val = -9999999
         moves = [m for m in self._board.legal_moves()]
-        move = moves[randint(0, len(moves) - 1)]
+        my_moves = []
+        #print("moves = ", moves)
+        for move in moves:
+            #print("move in player moves = ", move)
+            self._board.push(move)
+            val = self.maxValue(alpha,beta,profondeur,True)
+            self._board.pop()
+            #print("val: ",val)
+            if val > best_val:
+                #print("Refreshing best val from:",best_val, "to: ",val)
+                #print("new pos = ", move)
+                #time.sleep(10)
+                best_val = val
+                my_moves = [move]
+            if val == best_val:
+                my_moves.append(move)
+        move = random.choice(my_moves)    
         self._board.push(move)
-        print("I am playing ", move)
+        print("I am playing ", move, "from my_choices good arry choice: ", my_moves)
+        #time.sleep(5)
         (c, x, y) = move
         assert (c == self._mycolor)
         print("My current board :")
         print(self._board)
+        #time.sleep(10)
         return (x, y)
 
     def playOpponentMove(self, x, y):
@@ -70,36 +94,61 @@ class myPlayer(PlayerInterface):
         else:
             print("I lost :(!!")
 
-    def evaluate(self,weight):
-        return weight
+    def evaluate(self, player):
+        res = 0
+        move_weight = 0
+        move_weight_alpha = -99999
+        move_weight_beta = 99999 
+        #print(player)
+        moves = [m for m in self._board.legal_moves()]
 
-    def computeWeight(self,move):
-        [player,x,y] = move
-        if(player == self._mycolor):
-            return WeightMap[x,y]
-        else:
-            return -WeightMap[x,y]
+        if player == 1:
+            #print("coucou player")
+             
+            for move in moves:
+                move_weight = WeightMap[move[1],move[2]]
+                #print("move_weight_alpha",move_weight_alpha)
+                if (move_weight_alpha < move_weight):
+                    move_weight_alpha = move_weight
+            return move_weight_alpha
 
+        if player == 0: 
+            print("not coucou player")
+            time.sleep(5)
+            for move in moves:
+                #print(move)
+                #print("Debug not move_weight: ",move_weight_beta)
+                if move_weight_beta > WeightMap[move[1],move[2]] :
+                    move_weight_beta = WeightMap[move[1],move[2]]
+        return move_weight_beta
 
-    def maxValue(self,alpha,beta,sumWeight,depth,depthMax):
-        if depth == depthMax:
-            return self.evaluate(sumWeight)
+    def maxValue(self,alpha,beta,depthMax, playerBlack=True):
+        #traiter game over
+        if depthMax == 0 :
+            #print("Debug max alpha:", alpha,"Beta :", beta )
+            return self.evaluate(1) if playerBlack else self.evaluate(0)
         for move in self._board.legal_moves():
             self._board.push(move)
-            alpha = max(alpha,self.minValue(alpha,beta,sumWeight+self.computeWeight(move),depth,depthMax))
+            alpha = max(alpha,self.minValue(alpha,beta,depthMax-1,True))
             self._board.pop()
             if alpha >= beta:
+                #print("Debug alpha:", alpha,"Beta :", beta )
                 return beta
+        #print("Debug alpha:", alpha,"Beta :", beta )
         return alpha
 
-    def minValue(self,alpha,beta,sumWeight,depth,depthMax):
-        if depth == depthMax:
-            return self.evaluate(sumWeight)
+    def minValue(self,alpha,beta,depthMax=3, playerBlack=False):
+        #traiter game over
+        if depthMax == 0 :
+            #print("Debug min alpha:", alpha,"Beta :", beta )
+            return self.evaluate(1) if playerBlack else self.evaluate(0)
         for move in self._board.legal_moves():
             self._board.push(move)
-            beta = min(beta,self.maxValue(alpha,beta,sumWeight+self.computeWeight(move),depth,depthMax))
+            beta = min(beta,self.maxValue(alpha,beta,depthMax-1))
             self._board.pop()
             if alpha >= beta:
+                #print("Debug min alpha cut:", alpha,"Beta :", beta )
                 return alpha
+        #print("Debug min alpha:", alpha,"Beta :", beta )
         return beta
     
