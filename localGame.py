@@ -1,5 +1,6 @@
 import Reversi
 import myPlayer
+import myRandomPlayer
 import time
 from io import StringIO
 import sys
@@ -10,7 +11,7 @@ players = []
 player1 = myPlayer.myPlayer()
 player1.newGame(b._BLACK)
 players.append(player1)
-player2 = myPlayer.myPlayer()
+player2 = myRandomPlayer.myRandomPlayer()
 player2.newGame(b._WHITE)
 players.append(player2)
 
