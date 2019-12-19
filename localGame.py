@@ -1,13 +1,16 @@
 import Reversi
 import myPlayer
+import randomPlayer
+import myPlayerDumb
 import time
+import noePlayer
 from io import StringIO
 import sys
 
 b = Reversi.Board(10)
 
 players = []
-player1 = myPlayer.myPlayer()
+player1 = noePlayer.noePlayer()
 player1.newGame(b._BLACK)
 players.append(player1)
 player2 = myPlayer.myPlayer()
