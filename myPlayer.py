@@ -84,7 +84,7 @@ class myPlayer(PlayerInterface):
                     return [0,move]
                 
 
-        for move in self._board.legal_moves():
+        for move in moves:
             self._board.push(move)
             if depth == 0:
                 bestMove = move
@@ -100,6 +100,7 @@ class myPlayer(PlayerInterface):
     def minValue(self,alpha,beta,depth,depthMax,bestMove):
         if depth == depthMax:
             return [self.evaluate(),bestMove]
+            
         for move in self._board.legal_moves():
             self._board.push(move)
             if depth == 0:
@@ -170,4 +171,4 @@ class myPlayer(PlayerInterface):
         if black+white<30:
             return len(myMoves)-len(opponentMoves)
         if black+white>=30:
-            return myMovesWeight
+            return myMovesWeight-opponentMovesWeight
