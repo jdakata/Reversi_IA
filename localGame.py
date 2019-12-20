@@ -35,7 +35,7 @@ while not b.is_game_over():
     othercolor = b._BLACK if nextplayercolor == b._WHITE else b._WHITE
     
     currentTime = time.time()
-    sys.stdout = stringio
+    #sys.stdout = stringio
     move = players[nextplayer].getPlayerMove()
     sys.stdout = sysstdout
     playeroutput = "\r" + stringio.getvalue()

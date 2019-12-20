@@ -53,17 +53,11 @@ class myPlayer(PlayerInterface):
         best_val = -9999999
         moves = [m for m in self._board.legal_moves()]
         my_moves = []
-        #print("moves = ", moves)
         for move in moves:
-            #print("move in player moves = ", move)
             self._board.push(move)
             val = self.maxValue(alpha,beta,profondeur,True)
             self._board.pop()
-            #print("val: ",val)
             if val > best_val:
-                #print("Refreshing best val from:",best_val, "to: ",val)
-                #print("new pos = ", move)
-                #time.sleep(10)
                 best_val = val
                 my_moves = [move]
             if val == best_val:
@@ -71,12 +65,10 @@ class myPlayer(PlayerInterface):
         move = random.choice(my_moves)    
         self._board.push(move)
         print("I am playing ", move, "from my_choices good arry choice: ", my_moves)
-        #time.sleep(5)
         (c, x, y) = move
         assert (c == self._mycolor)
         print("My current board :")
         print(self._board)
-        #time.sleep(10)
         return (x, y)
 
     def playOpponentMove(self, x, y):
@@ -94,61 +86,126 @@ class myPlayer(PlayerInterface):
         else:
             print("I lost :(!!")
 
+    
+    def getstable(self, color):
+        board = self.convertToBinary()
+        stable = [0,0,0]
+        cind1 = [0,0,9,9]
+        cind2 = [0,9,9,0]
+        inc1 = [0,1,0,-1]
+        inc2 = [1,0,-1,0]
+        stop = [0,0,0,0]
+        for i in range(4):
+            if board[cind1[i]][cind2[i]] == color:
+                stop[i] = 1
+                stable[0] += 1
+                for j in range(1,9):
+                    if board[cind1[i]+inc1[i]*j][cind2[i]+inc2[i]*j] != color:
+                        break
+                    else:
+                        stop[i] = j + 1
+                        stable[1] += 1
+        for i in range(4):
+            if board[cind1[i]][cind2[i]] == color:
+                for j in range(1,9-stop[i-1]):
+                    if board[cind1[i]-inc1[i-1]*j][cind2[i]-inc2[i-1]*j] != color:
+                        break
+                    else:
+                        stable[1] += 1
+        print(stable)
+        colfull = numpy.zeros((10, 10), dtype=numpy.int)
+        colfull[:,numpy.sum(abs(board), axis = 0) == 10] = True
+        rowfull = numpy.zeros((10, 10), dtype=numpy.int)
+        rowfull[numpy.sum(abs(board), axis = 1) == 10,:] = True
+        diag1full = numpy.zeros((10, 10), dtype=numpy.int)
+        for i in range(19):
+            diagsum = 0
+            if i <= 9:
+                sind1 = i
+                sind2 = 0
+                jrange = i+1
+            else:
+                sind1 = 9
+                sind2 = i-9
+                jrange = 19-i
+            for j in range(jrange):
+                diagsum += abs(board[sind1-j][sind2+j])
+            if diagsum == jrange:
+                for k in range(jrange):
+                    diag1full[sind1-j][sind2+j] = True
+        diag2full = numpy.zeros((10, 10), dtype=numpy.int)
+        for i in range(19):
+            diagsum = 0
+            if i <= 9:
+                sind1 = i
+                sind2 = 9
+                jrange = i+1
+            else:
+                sind1 = 9
+                sind2 = 18-i
+                jrange = 19-i
+            for j in range(jrange):
+                diagsum += abs(board[sind1-j][sind2-j])
+            if diagsum == jrange:
+                for k in range(jrange):
+                    diag2full[sind1-j][sind2-j] = True
+        stable[2] = sum(sum(numpy.logical_and(numpy.logical_and(numpy.logical_and(colfull, rowfull), diag1full), diag2full)))
+        return stable
+
     def evaluate(self, player):
         res = 0
         move_weight = 0
         move_weight_alpha = -99999
         move_weight_beta = 99999 
-        #print(player)
         moves = [m for m in self._board.legal_moves()]
-
+        stable = self.getstable(1)
         if player == 1:
-            #print("coucou player")
              
             for move in moves:
+                print("coucou player")
                 move_weight = WeightMap[move[1],move[2]]
-                #print("move_weight_alpha",move_weight_alpha)
                 if (move_weight_alpha < move_weight):
                     move_weight_alpha = move_weight
-            return move_weight_alpha
+            return move_weight_alpha +10*sum(stable)
 
         if player == 0: 
             print("not coucou player")
-            time.sleep(5)
             for move in moves:
-                #print(move)
-                #print("Debug not move_weight: ",move_weight_beta)
                 if move_weight_beta > WeightMap[move[1],move[2]] :
                     move_weight_beta = WeightMap[move[1],move[2]]
-        return move_weight_beta
+        #print(stable)            
+        return move_weight_beta 
 
     def maxValue(self,alpha,beta,depthMax, playerBlack=True):
-        #traiter game over
         if depthMax == 0 :
-            #print("Debug max alpha:", alpha,"Beta :", beta )
+            #time.sleep(5)
             return self.evaluate(1) if playerBlack else self.evaluate(0)
         for move in self._board.legal_moves():
             self._board.push(move)
-            alpha = max(alpha,self.minValue(alpha,beta,depthMax-1,True))
+            alpha = max(alpha,self.minValue(alpha,beta,depthMax-1))
             self._board.pop()
             if alpha >= beta:
-                #print("Debug alpha:", alpha,"Beta :", beta )
                 return beta
-        #print("Debug alpha:", alpha,"Beta :", beta )
         return alpha
 
     def minValue(self,alpha,beta,depthMax=3, playerBlack=False):
         #traiter game over
         if depthMax == 0 :
-            #print("Debug min alpha:", alpha,"Beta :", beta )
-            return self.evaluate(1) if playerBlack else self.evaluate(0)
+            return self.evaluate(0) if playerBlack else self.evaluate(1)
         for move in self._board.legal_moves():
             self._board.push(move)
             beta = min(beta,self.maxValue(alpha,beta,depthMax-1))
             self._board.pop()
             if alpha >= beta:
-                #print("Debug min alpha cut:", alpha,"Beta :", beta )
                 return alpha
-        #print("Debug min alpha:", alpha,"Beta :", beta )
         return beta
     
+    def convertToBinary(self):
+        board = numpy.zeros((10,10))
+        for i in range (10):
+            for j in range(10):
+                if (self._board._board[i][j] == 2):
+                    board[i][j] = -1
+                else:
+                    board[i][j] = self._board._board[i][j]
+        return board
