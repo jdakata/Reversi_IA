@@ -6,22 +6,25 @@ import numpy
 from random import randint
 from playerInterface import *
 
-WeightMap = numpy.array([[500, -250, 150, 100, 80, 80, 100, 150, -250, 500],
-                         [-250, -350,  0, 1, 1, 1, 1,  0, -450, -350],
-                         [ 150,   0,  3, 2, 1, 1, 2,  3,   0,  150],
-                         [ 100,   1,  2, 1, 1, 1, 1,  2,   1,   100],
-                         [  80,   1,  2, 1, 16, 16, 1,  2,   1,   80],
-                         [  80,   1,  2, 1, 16, 16, 1,  2,   1,   80],
-                         [ 100,   1,  2, 1, 1, 1, 1,  2,   1,   100],
-                         [ 150,   0,  3, 2, 1, 1, 2,  3,   0,  150],
-                         [-250, -350,  0, 1, 1, 1, 1,  0, -350, -250],
-                         [500, -250, 150, 100, 80, 80, 100, 150, -250, 500]])
-
 class myPlayer(PlayerInterface):
 
     def __init__(self):
         self._board = Reversi.Board(10)
         self._mycolor = None
+        self._nbMovesPlayed = 0
+        self.WeightMap = numpy.array([[ 500,-150,  30,  10,   8,   8,  10,  30,-150, 500],
+                                        [-150,-250,   0,   0,   0,   0,   0,   0,-250,-150],
+                                        [  30,   0,   1,   2,   2,   2,   2,   1,   0,  30],
+                                        [  10,   0,   2,  10,  12,  12,  10,   2,   0,  10],
+                                        [   8,   0,   2,  12,  30,  30,  12,   2,   0,   8],
+                                        [   8,   0,   2,  12,  30,  30,  12,   2,   0,   8],
+                                        [  10,   0,   2,  10,  12,  12,  10,   2,   0,  10],
+                                        [  30,   0,   1,   2,   2,   2,   2,   1,   0,  30],
+                                        [-150,-250,   0,   0,   0,   0,   0,   0,-250,-150],
+                                        [ 500,-150,  30,  10,   8,   8,  10,  30,-150, 500]])
+        (Min,Max) = self.getIntervall(self.WeightMap)
+        self._MinMapWeight = Min
+        self._MaxMapWeight = Max
 
     def getPlayerName(self):
         return "my Player"
@@ -30,11 +33,84 @@ class myPlayer(PlayerInterface):
         if self._board.is_game_over():
             #print("Referee told me to play but the game is over!")
             return (-1, -1)
-        [value,move] = self.maxValue(-9999,9999,0,3,[])
+
+        self._nbMovesPlayed+=1
+
+        if self._nbMovesPlayed  == 13 :
+
+            WeightMap2 = numpy.array([[   0,   0,   0,   0,   0,   0,   0,   0,   0,   0],
+                                    [   0,   0,   0,   0,   0,   0,   0,   0,   0,   0],
+                                    [   0,   0,   0,   0,   0,   0,   0,   0,   0,   0],
+                                    [   0,   0,   0,   4,   4,   4,   4,   0,   0,   0],
+                                    [   0,   0,   0,   4,  14,  14,   4,   0,   0,   0],
+                                    [   0,   0,   0,   4,  14,  14,   4,   0,   0,   0],
+                                    [   0,   0,   0,   4,   4,   4,   4,   0,   0,   0],
+                                    [   0,   0,   0,   0,   0,   0,   0,   0,   0,   0],
+                                    [   0,   0,   0,   0,   0,   0,   0,   0,   0,   0],
+                                    [   0,   0,   0,   0,   0,   0,   0,   0,   0,   0]])
+
+            (Min,Max) = self.getIntervall(WeightMap2)
+
+            self._MinMapWeight = Min
+            self._MaxMapWeight = Max
+
+            self.WeightMap = self.WeightMap-WeightMap2
+
+        if self._nbMovesPlayed < 12 :
+            moment = 1
+            depth = 6
+        elif self._nbMovesPlayed > 85 :
+            moment = 3
+            depth = 10
+        else :
+            moment = 2
+            depth = 4
+        
+        [value,move] = self.maxValue(-9999,9999,0,depth,[],moment)
+
         self._board.push(move)
         #print("I am playing ", move)
         (c, x, y) = move
         assert (c == self._mycolor)
+
+        #update the WeightMap
+        if x == 0 and y == 0:
+            self.WeightMap[0][1] = 300
+            self.WeightMap[0][2] = 150
+            self.WeightMap[0][3] = 80
+            self.WeightMap[0][4] = 30
+            self.WeightMap[1][0] = 300
+            self.WeightMap[2][0] = 150
+            self.WeightMap[3][0] = 80
+            self.WeightMap[4][0] = 30
+        if x == 9 and y == 9:
+            self.WeightMap[9][8] = 300
+            self.WeightMap[9][7] = 150
+            self.WeightMap[9][6] = 80
+            self.WeightMap[9][5] = 30
+            self.WeightMap[8][9] = 300
+            self.WeightMap[7][9] = 150
+            self.WeightMap[6][9] = 80
+            self.WeightMap[5][9] = 30
+        if x == 0 and y == 9:
+            self.WeightMap[0][8] = 300
+            self.WeightMap[0][7] = 150
+            self.WeightMap[0][6] = 80
+            self.WeightMap[0][5] = 30
+            self.WeightMap[1][9] = 300
+            self.WeightMap[2][9] = 150
+            self.WeightMap[3][9] = 80
+            self.WeightMap[4][9] = 30
+        if x == 9 and y == 0:
+            self.WeightMap[9][1] = 300
+            self.WeightMap[9][2] = 150
+            self.WeightMap[9][3] = 80
+            self.WeightMap[9][4] = 30
+            self.WeightMap[8][0] = 300
+            self.WeightMap[7][0] = 150
+            self.WeightMap[6][0] = 80
+            self.WeightMap[5][0] = 30
+
         #print("My current board :")
         #print(self._board)
         return (x, y)
@@ -43,37 +119,20 @@ class myPlayer(PlayerInterface):
         assert (self._board.is_valid_move(self._opponent, x, y))
         #print("Opponent played ", (x, y))
         self._board.push([self._opponent, x, y])
-        if x == 0 and y == 0:
-            WeightMap[1][0]-=250
-            WeightMap[0][1]-=250
-            WeightMap[1][1]-=250
-        if x == 9 and y == 9:
-            WeightMap[8][9]-=250
-            WeightMap[9][8]-=250
-            WeightMap[8][8]-=250
-        if x == 0 and y == 9:
-            WeightMap[0][8]-=250
-            WeightMap[1][9]-=250
-            WeightMap[1][8]-=250
-        if x == 9 and y == 0:
-            WeightMap[9][1]-=250
-            WeightMap[8][0]-=250
-            WeightMap[8][1]-=250
 
     def newGame(self, color):
         self._mycolor = color
         self._opponent = 1 if color == 2 else 2
 
     def endGame(self, winner):
-        pass
-        # if self._mycolor == winner:
-        #     print("I won!!!")
-        # else:
-        #     print("I lost :(!!")
+        if self._mycolor == winner:
+            print("I won!!!")
+        else:
+            print("I lost :(!!")
 
-    def maxValue(self,alpha,beta,depth,depthMax,bestMove):
-        if depth == depthMax:
-            return [self.evaluate(),bestMove]
+    def maxValue(self,alpha,beta,depth,depthMax,bestMove,moment):
+        if depth == depthMax or self._board.is_game_over() == True:
+            return [self.evaluate(moment),bestMove]
 
         moves = self._board.legal_moves()
 
@@ -81,14 +140,13 @@ class myPlayer(PlayerInterface):
             for move in self._board.legal_moves():
                 [player,x,y] = move
                 if (x == 0 and y == 0) or (x == 9 and y == 9) or (x == 0 and y == 9) or (x == 9 and y == 0):
-                    return [0,move]
-                
+                    return [0,move]              
 
         for move in moves:
             self._board.push(move)
             if depth == 0:
                 bestMove = move
-            [value,bestMove_] = self.minValue(alpha,beta,depth+1,depthMax,bestMove)
+            [value,bestMove_] = self.minValue(alpha,beta,depth+1,depthMax,bestMove,moment)
             if alpha<value:
                 alpha = value
                 bestMove = bestMove_
@@ -97,15 +155,15 @@ class myPlayer(PlayerInterface):
                 return [beta,bestMove]
         return [alpha,bestMove]
 
-    def minValue(self,alpha,beta,depth,depthMax,bestMove):
+    def minValue(self,alpha,beta,depth,depthMax,bestMove,moment):
         if depth == depthMax:
-            return [self.evaluate(),bestMove]
+            return [self.evaluate(moment),bestMove]
             
         for move in self._board.legal_moves():
             self._board.push(move)
             if depth == 0:
                 bestMove = move
-            [value,bestMove_] = self.maxValue(alpha,beta,depth+1,depthMax,bestMove)
+            [value,bestMove_] = self.maxValue(alpha,beta,depth+1,depthMax,bestMove,moment)
             if beta>value:
                 beta = value
                 bestMove = bestMove_
@@ -130,9 +188,9 @@ class myPlayer(PlayerInterface):
         for x in range(0,self._board._boardsize):
             for y in range(0,self._board._boardsize):
                 if self._board._board[x][y] == self._mycolor :
-                    myPiecesWeight += WeightMap[x][y]
+                    myPiecesWeight += self.WeightMap[x][y]
                 else:
-                    opponentPiecesWeight += WeightMap[x][y]
+                    opponentPiecesWeight += self.WeightMap[x][y]
         return [myPiecesWeight,opponentPiecesWeight]
 
     # the total weight of a set of moves
@@ -140,7 +198,7 @@ class myPlayer(PlayerInterface):
         sumW = 0
         for i in range (len(moves)):
             [player,x,y] = moves[i]
-            sumW += WeightMap[x][y]
+            sumW += self.WeightMap[x][y]
         return sumW
 
     def evaluateMobility(self):
@@ -148,27 +206,43 @@ class myPlayer(PlayerInterface):
         opponentMovesWeight = self.getMovesWeight(opponentMoves)
         myMovesWeight = self.getMovesWeight(myMoves)
         return [myMovesWeight,opponentMovesWeight]
+    
+    def getIntervall(self,map):
+        maxM = 0
+        minM = 0
+        for i in range (10):
+            for j in range (10):
+                val = map[i][j]
+                if val<0:
+                    minM += val
+                else :
+                    maxM += val
+        return minM,maxM
 
-    def evaluate(self):
-        (black,white) = self._board.get_nb_pieces()
-        # return self.evaluateMobility()
-        # if black+white<30:
-        #     print("Lsimooooooooooooooooon")
-        #     if self._opponent == self._board._BLACK:
-        #         return white-black
-        #     else:
-        #         return black-white
-        #     return 750*self.evaluateMobility() + 250*self.evaluateCurrentPiecesWeight()
-        # print("Zemmariiiiiiiiiiiiiiiiiiiiii")
-        # return self.evaluateMobility()
-        # return 450*self.evaluateMobility() + 650*self.evaluateCurrentPiecesWeight()
+    def normalizeValue(self,value,Min,Max):
+        return 2*((value-Min)/(Max-Min))-1
 
-        [myMoves,opponentMoves] = self.getMovesBlackAndWhite()
-        opponentMovesWeight = self.getMovesWeight(opponentMoves)
-        myMovesWeight = self.getMovesWeight(myMoves)
+    def evaluate(self,moment):
+        if moment == 1:
+            moves = self._board.legal_moves()
+            if self._board._nextPlayer == self._opponent:
+                val = self.getMovesWeight(moves)
+                return self.normalizeValue(val,self._MinMapWeight,self._MinMapWeight)
+            else:
+                val = len(moves)
+                return self.normalizeValue(val,1,20) 
 
-        # return myMovesWeight + 15*(len(myMoves)-len(opponentMoves))
-        if black+white<30:
-            return len(myMoves)-len(opponentMoves)
-        if black+white>=30:
-            return myMovesWeight-opponentMovesWeight
+        if moment == 2:
+            moves = self._board.legal_moves()
+            mobility = len(moves)
+            mobility = self.normalizeValue(mobility,1,20)
+            position = self.getMovesWeight(moves)
+            position = self.normalizeValue(position,self._MinMapWeight,self._MinMapWeight)
+            return mobility+10*position
+
+        if moment == 3:
+            (black,white) = self._board.get_nb_pieces()
+            if self._opponent == self._board._BLACK:
+                return white-black
+            else:
+                return black-white
